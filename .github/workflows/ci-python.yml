@@ -6,6 +6,9 @@ on:
         required: true
         type: string
 
+env:
+  SONAR_TOKEN: ${{ inputs.sonar_token }}
+
 jobs:
   ci:
     runs-on: ubuntu-latest
