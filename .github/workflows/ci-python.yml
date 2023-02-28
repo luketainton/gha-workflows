@@ -1,13 +1,9 @@
 name: Python CI
 on:
   workflow_call:
-    inputs:
-      sonar_token:
+    secrets:
+      SONAR_TOKEN:
         required: true
-        type: string
-
-env:
-  SONAR_TOKEN: ${{ inputs.sonar_token }}
 
 jobs:
   ci:
@@ -37,4 +33,4 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ inputs.sonar_token }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
