@@ -1,6 +1,10 @@
 name: Python CI
 on:
   workflow_call:
+    inputs:
+      sonar_token:
+        required: true
+        type: string
 
 jobs:
   ci:
