@@ -4,6 +4,8 @@ on:
     secrets:
       SONAR_TOKEN:
         required: true
+      SNYK_TOKEN:
+        required: true
 
 jobs:
   ci:
