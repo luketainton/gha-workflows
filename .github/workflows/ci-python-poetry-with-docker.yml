@@ -30,11 +30,11 @@ jobs:
       - name: Install dependencies
         run: poetry install
       - name: Lint
-        run: pylint --recursive=yes --output-format=parseable --output=lintreport.txt . || pylint-exit $?
+        run: poetry run pylint --recursive=yes --output-format=parseable --output=lintreport.txt . || pylint-exit $?
       - name: Unit Test
         run: |
-          coverage run -m pytest -v --junitxml=testresults.xml
-          coverage xml
+          poetry run coverage run -m pytest -v --junitxml=testresults.xml
+          poetry run coverage xml
           sed -i 's@${{ github.workspace }}@/github/workspace@g' coverage.xml
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
