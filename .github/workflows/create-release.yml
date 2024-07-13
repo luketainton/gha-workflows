@@ -1,13 +1,17 @@
 name: Create Release
 on:
   workflow_call:
+    outputs:
+      release_name:
+        description: "Name of the created release"
+        value: ${{ jobs.create_release.outputs.release_name }}
 
 jobs:
   create_release:
     name: Create Release
     runs-on: ubuntu-latest
     outputs:
-      new_tag: ${{ steps.tag_version.outputs.new_tag }}
+      release_name: ${{ steps.tag_version.outputs.new_tag }}
     steps:
       - uses: actions/checkout@v4
 
