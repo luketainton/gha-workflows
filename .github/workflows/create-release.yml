@@ -22,10 +22,11 @@ jobs:
         run: |
           CHANGES=$(git log $(git describe --tags --abbrev=0)..HEAD --no-merges --oneline)
           echo "$CHANGES"
-          if [ -z "$CHANGES" ]; then exit 1; else exit 0; fi
+          if [ -z "$CHANGES" ]; then echo "changes=false" >> "$GITHUB_OUTPUT"; else echo "changes=true" >> "$GITHUB_OUTPUT"; fi
 
       - name: Bump version and push tag
         id: tag_version
+        if: steps.changes.outputs.changes == 'true'
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -33,6 +34,7 @@ jobs:
           # default_bump: false
 
       - name: Create a GitHub release
+        if: steps.changes.outputs.changes == 'true'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
