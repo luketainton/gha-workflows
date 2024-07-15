@@ -25,7 +25,6 @@ jobs:
           if [ -z "$CHANGES" ]; then exit 1; else exit 0; fi
 
       - name: Bump version and push tag
-        if: steps.changes.outputs.any_changed == 'true'
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
         with:
@@ -34,7 +33,6 @@ jobs:
           default_bump: false
 
       - name: Create a GitHub release
-        if: steps.changes.outputs.any_changed == 'true'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
