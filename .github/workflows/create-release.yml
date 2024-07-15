@@ -17,9 +17,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Changes Since Last Tag
+      - name: Changes since last tag
         id: changes
         uses: jsmith/changes-since-last-tag@v0.4.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Bump version and push tag
         if: steps.changes.outputs.any_changed == 'true'
