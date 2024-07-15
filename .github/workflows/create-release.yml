@@ -21,7 +21,8 @@ jobs:
         id: changes
         run: |
           CHANGES=$(git log $(git describe --tags --abbrev=0)..HEAD --no-merges --oneline)
-          if [ -z "$CHANGES" ]; then exit 1; else exit 1; fi
+          echo "$CHANGES"
+          if [ -z "$CHANGES" ]; then exit 1; else exit 0; fi
 
       - name: Bump version and push tag
         if: steps.changes.outputs.any_changed == 'true'
