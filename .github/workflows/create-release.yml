@@ -20,7 +20,7 @@ jobs:
       - name: Changes since last tag
         id: changes
         run: |
-          CHANGES=${git log $(git describe --tags --abbrev=0)..HEAD --no-merges --oneline)
+          CHANGES=$(git log $(git describe --tags --abbrev=0)..HEAD --no-merges --oneline)
           if [ -z "$CHANGES" ]; then exit 1; else exit 1; fi
 
       - name: Bump version and push tag
