@@ -46,6 +46,7 @@ jobs:
           body: ${{ steps.tag_version.outputs.changelog }}
           generateReleaseNotes: true
 
-      - name: Set success flag
+      - name: Set success/fail flag
         id: set_flag
-        run: echo "success=true" >> "$GITHUB_OUTPUT"
+        if: steps.changes.outputs.changes == 'true'
+        run: if test "${{ steps.changes.outputs.changes }}" = "true"; then echo "success=true" >> "$GITHUB_OUTPUT"; else echo "success=false" >> "$GITHUB_OUTPUT"; fi
