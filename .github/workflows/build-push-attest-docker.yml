@@ -6,6 +6,10 @@ on:
       release:
         required: true
         type: string
+    outputs:
+      success:
+        description: "Did the flow succeed?"
+        value: ${{ jobs.publish.outputs.success }}
 
 jobs:
   publish:
@@ -16,6 +20,8 @@ jobs:
       contents: read
       attestations: write
       id-token: write
+    outputs:
+      success: ${{ steps.set_flag.outputs.success }}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -58,3 +64,7 @@ jobs:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
+
+      - name: Set success flag
+        id: set_flag
+        run: echo "success=true" >> "$GITHUB_OUTPUT"
