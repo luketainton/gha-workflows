@@ -1,6 +1,11 @@
-name: Python CI
+name: Python w/ Poetry CI
 on:
   workflow_call:
+    inputs:
+      python_version:
+        type: string
+        default: "3.11"
+        description: "Version of Python to use for testing environment"
     secrets:
       SONAR_TOKEN:
         required: true
@@ -11,6 +16,11 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
+      - name: Set python_version
+        id: python_version
+        run: |
+          PYTHON_VERSION=${{ github.event.inputs.python_version }}
+          echo "::set-output name=value::${PYTHON_VERSION:-"3.11"}"
       - name: Check out repository code
         uses: actions/checkout@v4.1.7
         with:
@@ -18,7 +28,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "${{ steps.python_version.outputs.value }}"
       - name: Setup Poetry
         uses: abatilo/actions-poetry@v3
       - name: Install dependencies
