@@ -2,7 +2,7 @@ name: Python + Docker CI
 on:
   workflow_call:
     inputs:
-      python_version:
+      python-version:
         type: string
         default: "3.11"
         description: "Version of Python to use for testing environment"
@@ -16,11 +16,11 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - name: Set python_version
-        id: python_version
+      - name: Set python-version
+        id: python-version
         run: |
-          PYTHON_VERSION=${{ github.event.inputs.python_version }}
-          echo "::set-output name=value::${PYTHON_VERSION:-"3.11"}"
+          PYTHON_VERSION=${{ github.event.inputs.python-version }}
+          echo "value=${PYTHON_VERSION:-"3.11"}" >> $GITHUB_OUTPUT
       - name: Check out repository code
         uses: actions/checkout@v4.1.7
         with:
@@ -34,7 +34,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "${{ steps.python_version.outputs.value }}"
+          python-version: "${{ steps.python-version.outputs.value }}"
       - name: Update Pip
         run: |
           pip install -U pip
