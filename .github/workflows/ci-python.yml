@@ -19,7 +19,7 @@ jobs:
       - name: Set python-version
         id: python-version
         run: |
-          PYTHON_VERSION=${{ github.event.inputs.python-version }}
+          PYTHON_VERSION=${{ inputs.python-version }}
           echo "value=${PYTHON_VERSION:-"3.11"}" >> $GITHUB_OUTPUT
       - name: Check out repository code
         uses: actions/checkout@v4.1.7
