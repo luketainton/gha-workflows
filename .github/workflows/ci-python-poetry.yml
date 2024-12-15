@@ -40,8 +40,8 @@ jobs:
           poetry run coverage run -m pytest -v --junitxml=testresults.xml
           poetry run coverage xml
           sed -i 's@${{ github.workspace }}@/github/workspace@g' coverage.xml
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+      - name: SonarQube Cloud Scan
+        uses: SonarSource/sonarqube-scan-action@v4.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
