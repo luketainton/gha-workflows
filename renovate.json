@@ -1,15 +1,21 @@
 {
-  "extends": ["config:base"],
+  "extends": [
+    "config:recommended"
+  ],
   "platformCommit": true,
   "dependencyDashboardAutoclose": true,
   "assignAutomerge": true,
   "assigneesFromCodeOwners": true,
   "rebaseWhen": "behind-base-branch",
   "rollbackPrs": true,
-  "labels": ["dependencies"],
+  "labels": [
+    "dependencies"
+  ],
   "vulnerabilityAlerts": {
     "enabled": true,
-    "labels": ["security"],
+    "labels": [
+      "security"
+    ],
     "commitMessagePrefix": "[SECURITY] ",
     "prCreation": "immediate"
   }
