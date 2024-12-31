@@ -2,7 +2,7 @@
   "extends": [
     "config:recommended"
   ],
-  "platformCommit": true,
+  "platformCommit": "enabled",
   "dependencyDashboardAutoclose": true,
   "assignAutomerge": true,
   "assigneesFromCodeOwners": true,
