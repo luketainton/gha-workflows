@@ -36,7 +36,7 @@ jobs:
           python-version: "${{ steps.python-version.outputs.value }}"
 
       - name: Setup Poetry
-        uses: abatilo/actions-poetry@v3
+        uses: abatilo/actions-poetry@v4
       
       - name: Setup virtual environment
         run: |
