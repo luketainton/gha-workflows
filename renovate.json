@@ -2,6 +2,9 @@
   "extends": [
     "config:recommended"
   ],
+  "ignorePaths": [
+    "**/.archive/**"
+  ],
   "platformCommit": "enabled",
   "dependencyDashboardAutoclose": true,
   "assignAutomerge": true,
@@ -9,12 +12,13 @@
   "rebaseWhen": "behind-base-branch",
   "rollbackPrs": true,
   "labels": [
-    "dependencies"
+    "type/dependencies"
   ],
   "vulnerabilityAlerts": {
     "enabled": true,
     "labels": [
-      "security"
+      "security",
+      "type/dependencies"
     ],
     "commitMessagePrefix": "[SECURITY] ",
     "prCreation": "immediate"
