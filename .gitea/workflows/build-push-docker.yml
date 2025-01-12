@@ -11,13 +11,9 @@ on:
       release:
         required: true
         type: string
-    outputs:
-      success:
-        description: "Did the flow succeed?"
-        value: ${{ jobs.create_docker.outputs.success }}
 
 jobs:
-  create_docker:
+  publish:
     name: Publish Docker Images
     runs-on: ubuntu-latest
     steps:
@@ -32,10 +28,10 @@ jobs:
           echo "{\"insecure-registries\": [\"${{ vars.PACKAGES_REGISTRY_URL }}\"]}" > /etc/docker/daemon.json
 
       - name: Get repo name
-        env:
-          REPO: ${{ gitea.repository }}
         id: split
         run: echo "repo=${REPO##*/}" >> $GITEA_OUTPUT
+        env:
+          REPO: ${{ gitea.repository }}
 
       - name: Check out repository
         uses: actions/checkout@v4.2.2
@@ -64,10 +60,10 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
+          tags: type=semver,pattern=v{{version}},value=${{ inputs.release }}
           images: |
             ghcr.io/${{ vars.GHCR_USERNAME }}/${{ steps.split.outputs.repo }}
             ${{ vars.PACKAGES_REGISTRY_URL }}/${{ gitea.repository }}
-          tags: type=semver,pattern=v{{version}},value=${{ inputs.release }}
 
       - name: Print metadata
         run: |
@@ -93,7 +89,3 @@ jobs:
           readarray -t lines <<<"$strtags"
           for element in "${lines[@]}"; do docker push "$element"; done
           unset strtags lines
-
-      - name: Set success flag
-        id: set_flag
-        run: echo "success=true" >> "$GITEA_OUTPUT"
