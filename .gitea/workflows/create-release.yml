@@ -7,7 +7,7 @@ on:
     outputs:
       release_name:
         description: "Name of the created release"
-        value: ${{ jobs.create_release.outputs.release_name }}
+        value: ${{ jobs.get_next_release.outputs.release_name }}
       success:
         description: "Was the release created successfully?"
         value: ${{ jobs.create_release.outputs.success }}
