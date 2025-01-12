@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
@@ -29,9 +29,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Snyk Vulnerability Scan
-        uses: snyk/actions/python-3.10@master
-        continue-on-error: true # To make sure that SARIF upload gets called
+        uses: snyk/actions/python@master
+        continue-on-error: true # Sometimes vulns aren't immediately fixable
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --sarif-file-output=snyk.sarif --all-projects
+          args: test --all-projects
