@@ -1,6 +1,9 @@
 name: Release
 on:
   workflow_call:
+    secrets:
+      ACTIONS_TOKEN:
+        required: true
     outputs:
       release_name:
         description: "Name of the created release"
