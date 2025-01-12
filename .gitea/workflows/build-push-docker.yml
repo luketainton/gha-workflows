@@ -14,10 +14,10 @@ on:
     outputs:
       success:
         description: "Did the flow succeed?"
-        value: ${{ jobs.publish.outputs.success }}
+        value: ${{ jobs.create_docker.outputs.success }}
 
 jobs:
-  publish:
+  create_docker:
     name: Publish Docker Images
     runs-on: ubuntu-latest
     needs: create_release
