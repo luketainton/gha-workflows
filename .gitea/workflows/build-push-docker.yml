@@ -29,7 +29,7 @@ jobs:
 
       - name: Get repo name
         id: split
-        run: echo "repo=${REPO##*/}" >> $GITEA_OUTPUT
+        run: echo "repo=${REPO##*/}" >> "$GITEA_OUTPUT"
         env:
           REPO: ${{ gitea.repository }}
 
