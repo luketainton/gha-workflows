@@ -8,13 +8,10 @@ on:
       release_name:
         description: "Name of the created release"
         value: ${{ jobs.get_next_release.outputs.release_name }}
-      success:
-        description: "Was the release created successfully?"
-        value: ${{ jobs.create_release.outputs.success }}
 
 jobs:
   get_next_release:
-    name: Create Release
+    name: Get Next Release
     runs-on: ubuntu-latest
     outputs:
       release_name: ${{ steps.get_next_version.outputs.tag }}
@@ -72,8 +69,6 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     needs: get_next_release
-    outputs:
-      success: ${{ steps.set_flag.outputs.success }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4.2.2
@@ -86,8 +81,3 @@ jobs:
           release_name: ${{ needs.get_next_release.outputs.release_name }}
           tag: ${{ needs.get_next_release.outputs.release_name }}
           body: ${{ needs.get_next_release.outputs.changelog }}
-
-      - name: Set success/fail flag
-        id: set_flag
-        if: steps.changes.outputs.changes == 'true'
-        run: echo "success=true" >> "$GITEA_OUTPUT"
