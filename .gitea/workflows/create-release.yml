@@ -1,4 +1,4 @@
-name: Create Release
+name: Release
 on:
   workflow_call:
     outputs:
@@ -13,63 +13,41 @@ jobs:
   create_release:
     name: Create Release
     runs-on: ubuntu-latest
+    # needs: test
     outputs:
-      release_name: ${{ steps.tag_version.outputs.new_tag }}
-      success: ${{ steps.set_flag.outputs.success }}
+      release_name: ${{ steps.get_next_version.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4.2.2
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
       - name: Changes since last tag
         id: changes
         run: |
-          rm -f .changes .changes_feat .changes_fix .changes_dep .changes_other
+          rm -f .changes
           git log $(git describe --tags --abbrev=0)..HEAD --no-merges --oneline >> .changes
           cat .changes
+
+      - name: Check for changes
+        run: |
           if [[ -z $(grep '[^[:space:]]' .changes) ]] ; then
             echo "changes=false"
             echo "changes=false" >> "$GITEA_OUTPUT"
           else
             echo "changes=true"
             echo "changes=true" >> "$GITEA_OUTPUT"
-            grep -i "feat" .changes >> .changes_feat
-            grep -i "fix" .changes >> .changes_fix
-            grep -i "dependencies" .changes >> .changes_dep
-            grep -i "other" .changes >> .changes_other
-          fi          
+          fi
 
       - name: Cancel if no changes
         if: steps.changes.outputs.changes == 'false'
         run: exit 1
 
-      - name: Create changelog
-        id: create_changelog
-        if: steps.changes.outputs.changes == 'true'
-        run: |
-          rm -f .changelog
-          if [[ -z $(grep '[^[:space:]]' .changes_feat) ]] ; then
-            printf "## 🚀 Features" > .changelog
-            cat .changes_feat >> .changelog
-          fi
-          if [[ -z $(grep '[^[:space:]]' .changes_fix) ]] ; then
-            printf "## 🐛 Bug Fixes" >> .changelog
-            cat .changes_fix >> .changelog
-          fi
-          if [[ -z $(grep '[^[:space:]]' .changes_dep) ]] ; then
-            printf "## 📦 Dependencies" >> .changelog
-            cat .changes_dep >> .changelog
-          fi
-          if [[ -z $(grep '[^[:space:]]' .changes_other) ]] ; then
-            printf "## 💬 Other" >> .changelog
-            cat .changes_other >> .changelog
-          fi          
-
       - name: Set server URL
         id: set_srvurl
         run: |
           SRVURL=$(echo "${{ gitea.server_url }}" | sed 's/https:\/\/\(.*\)/\1/')
-          echo "srvurl=$SRVURL" >> "$GITEA_OUTPUT"          
+          echo "srvurl=$SRVURL" >> "$GITEA_OUTPUT"
 
       - name: Get next version
         uses: TriPSs/conventional-changelog-action@v6
@@ -77,6 +55,8 @@ jobs:
         with:
           git-url: ${{ steps.set_srvurl.outputs.srvurl }}
           github-token: ${{ gitea.token }}
+          preset: "conventionalcommits"
+          # preset: "angular"  # This is the default
           skip-commit: true
           release-count: 1
           output-file: false
@@ -86,16 +66,10 @@ jobs:
           skip-tag: true
 
       - name: Create release
-        id: create_release
-        uses: akkuman/gitea-release-action@v1
-        env:
-          NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18
-        with:
-          tag: ${{ steps.get_next_version.outputs.tag }}
-          name: ${{ steps.get_next_version.outputs.tag }}
-          body_path: .changelog
-
-      - name: Set success/fail flag
-        id: set_flag
-        if: steps.changes.outputs.changes == 'true'
-        run: if test "${{ steps.changes.outputs.changes }}" = "true"; then echo "success=true" >> "$GITEA_OUTPUT"; else echo "success=false" >> "$GITEA_OUTPUT"; fi
+        run: |
+          curl -s -X POST \
+            -H "Authorization: token ${{ secrets.ACTIONS_TOKEN }}" \
+            -H "accept: application/json" \
+            -H "Content-Type: application/json" \
+            -d "{\"tag_name\": \"${{ steps.get_next_version.outputs.tag }}\", \"name\": \"${{ steps.get_next_version.outputs.tag }}\", \"body\": \"${{ steps.get_next_version.outputs.changelog }}\"}" \
+            "${{ gitea.server_url }}/api/v1/repos/${{ gitea.repository }}/releases"

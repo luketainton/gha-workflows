@@ -17,34 +17,83 @@ jobs:
       release_name: ${{ steps.tag_version.outputs.new_tag }}
       success: ${{ steps.set_flag.outputs.success }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
       - name: Changes since last tag
         id: changes
         run: |
-          CHANGES=$(git log $(git describe --tags --abbrev=0)..HEAD --no-merges --oneline)
-          echo "$CHANGES"
-          if [ -z "$CHANGES" ]; then echo "changes=false" >> "$GITEA_OUTPUT"; else echo "changes=true" >> "$GITEA_OUTPUT"; fi
+          rm -f .changes .changes_feat .changes_fix .changes_dep .changes_other
+          git log $(git describe --tags --abbrev=0)..HEAD --no-merges --oneline >> .changes
+          cat .changes
+          if [[ -z $(grep '[^[:space:]]' .changes) ]] ; then
+            echo "changes=false"
+            echo "changes=false" >> "$GITEA_OUTPUT"
+          else
+            echo "changes=true"
+            echo "changes=true" >> "$GITEA_OUTPUT"
+            grep -i "feat" .changes >> .changes_feat
+            grep -i "fix" .changes >> .changes_fix
+            grep -i "dependencies" .changes >> .changes_dep
+            grep -i "other" .changes >> .changes_other
+          fi          
 
-      - name: Bump version and push tag
-        id: tag_version
-        if: steps.changes.outputs.changes == 'true'
-        uses: mathieudutour/github-tag-action@v6.2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: minor
-          # default_bump: false
+      - name: Cancel if no changes
+        if: steps.changes.outputs.changes == 'false'
+        run: exit 1
 
-      - name: Create a GitHub release
+      - name: Create changelog
+        id: create_changelog
         if: steps.changes.outputs.changes == 'true'
-        uses: ncipollo/release-action@v1
+        run: |
+          rm -f .changelog
+          if [[ -z $(grep '[^[:space:]]' .changes_feat) ]] ; then
+            printf "## 🚀 Features" > .changelog
+            cat .changes_feat >> .changelog
+          fi
+          if [[ -z $(grep '[^[:space:]]' .changes_fix) ]] ; then
+            printf "## 🐛 Bug Fixes" >> .changelog
+            cat .changes_fix >> .changelog
+          fi
+          if [[ -z $(grep '[^[:space:]]' .changes_dep) ]] ; then
+            printf "## 📦 Dependencies" >> .changelog
+            cat .changes_dep >> .changelog
+          fi
+          if [[ -z $(grep '[^[:space:]]' .changes_other) ]] ; then
+            printf "## 💬 Other" >> .changelog
+            cat .changes_other >> .changelog
+          fi          
+
+      - name: Set server URL
+        id: set_srvurl
+        run: |
+          SRVURL=$(echo "${{ gitea.server_url }}" | sed 's/https:\/\/\(.*\)/\1/')
+          echo "srvurl=$SRVURL" >> "$GITEA_OUTPUT"          
+
+      - name: Get next version
+        uses: TriPSs/conventional-changelog-action@v6
+        id: get_next_version
         with:
-          tag: ${{ steps.tag_version.outputs.new_tag }}
-          name: ${{ steps.tag_version.outputs.new_tag }}
-          body: ${{ steps.tag_version.outputs.changelog }}
-          generateReleaseNotes: true
+          git-url: ${{ steps.set_srvurl.outputs.srvurl }}
+          github-token: ${{ gitea.token }}
+          skip-commit: true
+          release-count: 1
+          output-file: false
+          create-summary: true
+          skip-on-empty: true
+          skip-version-file: true
+          skip-tag: true
+
+      - name: Create release
+        id: create_release
+        uses: akkuman/gitea-release-action@v1
+        env:
+          NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18
+        with:
+          tag: ${{ steps.get_next_version.outputs.tag }}
+          name: ${{ steps.get_next_version.outputs.tag }}
+          body_path: .changelog
 
       - name: Set success/fail flag
         id: set_flag
