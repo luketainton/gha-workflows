@@ -11,6 +11,15 @@ on:
       release:
         required: true
         type: string
+      registry:
+        required: true
+        type: string
+      actions_username:
+        required: true
+        type: string
+      ghcr_username:
+        required: true
+        type: string
 
 jobs:
   publish:
@@ -24,8 +33,8 @@ jobs:
           mkdir -p /etc/docker
           touch -a /etc/default/docker
           touch -a /etc/docker/daemon.json
-          echo "DOCKER_OPTS=\"--insecure-registry ${{ vars.PACKAGES_REGISTRY_URL }}\"" >> /etc/default/docker
-          echo "{\"insecure-registries\": [\"${{ vars.PACKAGES_REGISTRY_URL }}\"]}" > /etc/docker/daemon.json
+          echo "DOCKER_OPTS=\"--insecure-registry ${{ inputs.registry }}\"" >> /etc/default/docker
+          echo "{\"insecure-registries\": [\"${{ inputs.registry }}\"]}" > /etc/docker/daemon.json
 
       - name: Get repo name
         id: split
@@ -45,15 +54,15 @@ jobs:
       - name: Log in to Gitea Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ vars.PACKAGES_REGISTRY_URL }}
-          username: ${{ vars.ACTIONS_USERNAME }}
+          registry: ${{ inputs.registry }}
+          username: ${{ inputs.actions_username }}
           password: ${{ secrets.ACTIONS_TOKEN }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ vars.GHCR_USERNAME }}
+          username: ${{ inputs.ghcr_username }}
           password: ${{ secrets.GHCR_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker
@@ -62,8 +71,8 @@ jobs:
         with:
           tags: type=semver,pattern=v{{version}},value=${{ inputs.release }}
           images: |
-            ghcr.io/${{ vars.GHCR_USERNAME }}/${{ steps.split.outputs.repo }}
-            ${{ vars.PACKAGES_REGISTRY_URL }}/${{ gitea.repository }}
+            ghcr.io/${{ inputs.ghcr_username }}/${{ steps.split.outputs.repo }}
+            ${{ inputs.registry }}/${{ gitea.repository }}
 
       - name: Print metadata
         run: |
