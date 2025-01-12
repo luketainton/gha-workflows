@@ -19,6 +19,7 @@ on:
 jobs:
   publish:
     name: Publish Docker Images
+    runs-on: ubuntu-latest
     needs: create_release
     steps:
       - name: Update Docker configuration
@@ -93,7 +94,7 @@ jobs:
           readarray -t lines <<<"$strtags"
           for element in "${lines[@]}"; do docker push "$element"; done
           unset strtags lines
-      
+
       - name: Set success flag
         id: set_flag
         run: echo "success=true" >> "$GITEA_OUTPUT"
