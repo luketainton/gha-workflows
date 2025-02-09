@@ -7,6 +7,8 @@ on:
         default: "3.11"
         description: "Version of Python to use for testing environment"
     secrets:
+      SONAR_HOST_URL:
+        required: false
       SONAR_TOKEN:
         required: true
       SNYK_TOKEN:
@@ -60,9 +62,10 @@ jobs:
       - name: Minimize uv cache
         run: uv cache prune --ci
 
-      - name: SonarQube Cloud Scan
+      - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v4.2.1
         env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Snyk Vulnerability Scan
