@@ -16,6 +16,7 @@ jobs:
     outputs:
       release_name: ${{ steps.get_next_version.outputs.tag }}
       changelog: ${{ steps.get_next_version.outputs.changelog }}
+      clean_changelog: ${{ steps.get_next_version.outputs.clean_changelog }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4.2.2
@@ -80,4 +81,4 @@ jobs:
         with:
           release_name: ${{ needs.get_next_release.outputs.release_name }}
           tag: ${{ needs.get_next_release.outputs.release_name }}
-          body: ${{ needs.get_next_release.outputs.changelog }}
+          body: ${{ needs.get_next_release.outputs.clean_changelog }}
