@@ -57,8 +57,8 @@ jobs:
         uses: umahmood/pushover-actions@main
         if: ${{ !cancelled() }}
         env:
-          PUSHOVER_TOKEN: ${{ secrets.PUSHOVER_TOKEN }}
-          PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
+          PUSHOVER_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER: ${{ secrets.PUSHOVER_USER_TOKEN }}
         with:
           status: ${{ job.status }}
           title: "Stack Removal ${{ job.status }}"
