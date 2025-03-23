@@ -23,17 +23,16 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Notify Build Start
-        uses: umahmood/pushover-actions@main
+      - name: "[ON RUNNER] Notify Build Start"
+        uses: https://git.tainton.uk/actions/pushover-action@v1.1.0
         env:
-          PUSHOVER_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
-          PUSHOVER_USER: ${{ secrets.PUSHOVER_USER_TOKEN }}
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_TOKEN: ${{ secrets.PUSHOVER_USER_TOKEN }}
         with:
-          status: ${{ job.status }}
-          title: 'Stack Removal Started'
           message: "Removing stack ${{ gitea.repository }}"
+          title: 'Stack Removal Started'
           url: "${{ gitea.server_url }}/${{ gitea.repository }}/actions/runs/${{ gitea.run_id }}"
-          url_title: 'View Deployment'
+          url_title: 'View Logs'
 
       - name: "[ON RUNNER] Set project variables"
         run: |
@@ -53,16 +52,14 @@ jobs:
             docker compose --env-file .env down
             cd ..
             rm -rf ${{ env.project_folder }}
-
-      - name: Notify Build End
-        uses: umahmood/pushover-actions@main
-        if: ${{ !cancelled() }}
+      
+      - name: "[ON RUNNER] Notify Build End"
+        uses: https://git.tainton.uk/actions/pushover-action@v1.1.0
         env:
-          PUSHOVER_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
-          PUSHOVER_USER: ${{ secrets.PUSHOVER_USER_TOKEN }}
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_TOKEN: ${{ secrets.PUSHOVER_USER_TOKEN }}
         with:
-          status: ${{ job.status }}
-          title: "Stack Removal ${{ job.status }}"
-          message: "Stack ${{ gitea.repository }} removed"
+          message: "Removed stack ${{ gitea.repository }}"
+          title: 'Stack Removal ${{ job.status }}'
           url: "${{ gitea.server_url }}/${{ gitea.repository }}/actions/runs/${{ gitea.run_id }}"
           url_title: 'View Logs'
