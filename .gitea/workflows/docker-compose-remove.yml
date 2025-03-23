@@ -31,6 +31,7 @@ jobs:
         with:
           status: ${{ job.status }}
           title: 'Stack Removal Started'
+          message: "Removing stack ${{ gitea.repository }}"
           url: "${{ gitea.server_url }}/${{ gitea.repository }}/actions/runs/${{ gitea.run_id }}"
           url_title: 'View Deployment'
 
@@ -62,5 +63,6 @@ jobs:
         with:
           status: ${{ job.status }}
           title: "Stack Removal ${{ job.status }}"
+          message: "Stack ${{ gitea.repository }} removed"
           url: "${{ gitea.server_url }}/${{ gitea.repository }}/actions/runs/${{ gitea.run_id }}"
           url_title: 'View Logs'
