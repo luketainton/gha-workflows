@@ -1,0 +1,97 @@
+name: Docker Compose Deploy Stack
+
+on:
+  workflow_call:
+    secrets:
+      DEPLOY_HOST:
+        required: true
+        type: string
+      DEPLOY_USERNAME:
+        required: true
+        type: string
+      DEPLOY_SSHKEY:
+        required: true
+        type: string
+      DEPLOY_PORT:
+        required: true
+        type: string
+      PUSHOVER_USER_TOKEN:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Build Start
+        uses: umahmood/pushover-actions@main
+        env:
+          PUSHOVER_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER: ${{ secrets.PUSHOVER_USER_TOKEN }}
+        with:
+          status: ${{ job.status }}
+          title: 'Stack Deployment Started'
+          url: "${{ gitea.server_url }}/${{ gitea.repository }}/actions/runs/${{ gitea.run_id }}"
+          url_title: 'View Deployment'
+
+      - name: "[ON RUNNER] Checkout the repo"
+        uses: actions/checkout@v4
+      
+      - name: "[ON RUNNER] Set project variables"
+        run: |
+          projectname="${{ gitea.event.repository.name }}"
+          echo "project_name=$projectname" >> $GITEA_ENV
+          echo "project_folder=/home/${{ secrets.DEPLOY_USERNAME }}/$projectname" >> $GITEA_ENV
+
+      - name: "[ON RUNNER] Create env file"
+        run: |
+          rm -f ".env"
+          touch ".env"
+          echo "$ALLVARS" | jq -r '. | to_entries[] | select(.key | startswith("DC_")) | .key + "=" + .value' >> ".env"
+          echo "$ALLSECRETS" | jq -r '. | to_entries[] | select(.key | startswith("DC_")) | .key + "=" + .value' >> ".env"
+        env:
+          ALLVARS: ${{ toJSON(vars) }}
+          ALLSECRETS: ${{ toJSON(secrets) }}
+      
+      - name: "[ON HOST] Make directory if not exists"
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          key: ${{ secrets.DEPLOY_SSHKEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          script: |
+            mkdir -p ${{ env.project_folder }}
+      
+      - name: "[ON HOST] SCP files to host"
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          key: ${{ secrets.DEPLOY_SSHKEY }}
+          source: "./compose.yaml,./.env"
+          target: "${{ env.project_folder }}/"
+      
+      - name: "[ON HOST] Deploy Stack"
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          key: ${{ secrets.DEPLOY_SSHKEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          script: |
+            cd ${{ env.project_folder }}
+            docker compose --env-file .env up --detach
+      
+      - name: Notify Build End
+        uses: umahmood/pushover-actions@main
+        if: ${{ !cancelled() }}
+        env:
+          PUSHOVER_TOKEN: ${{ secrets.PUSHOVER_TOKEN }}
+          PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
+        with:
+          status: ${{ job.status }}
+          title: "Stack Deployment ${{ job.status }}"
+          url: "${{ gitea.server_url }}/${{ gitea.repository }}/actions/runs/${{ gitea.run_id }}"
+          url_title: 'View Logs'
