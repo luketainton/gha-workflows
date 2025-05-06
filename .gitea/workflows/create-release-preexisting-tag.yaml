@@ -21,3 +21,4 @@ jobs:
           release_name: ${{ inputs.tag }}
           tag: ${{ inputs.tag }}
           body: ${{ inputs.body }}
+          token: ${{ secrets.ACTIONS_TOKEN }}
