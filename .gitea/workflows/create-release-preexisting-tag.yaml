@@ -1,0 +1,24 @@
+name: Create Gitea Release Pre-Existing Tag
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+      body:
+        required: false
+    secrets:
+      ACTIONS_TOKEN:
+        required: true
+
+jobs:
+  create_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: get_next_release
+    steps:
+      - name: Create release
+        uses: https://git.tainton.uk/actions/create-release-action@v1.1.0
+        with:
+          release_name: ${{ inputs.tag }}
+          tag: ${{ inputs.tag }}
+          body: ${{ inputs.body }}
