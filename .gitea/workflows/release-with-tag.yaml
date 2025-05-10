@@ -65,3 +65,7 @@ jobs:
           skip-on-empty: true
           skip-version-file: true
           skip-tag: false
+      
+      - name: Cancel if no changelog
+        if: steps.get_next_version.outputs.skipped == 'true'
+        run: exit 1
