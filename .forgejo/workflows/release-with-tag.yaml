@@ -1,0 +1,71 @@
+name: Release w/ Tag
+on:
+  workflow_call:
+    outputs:
+      tag_name:
+        description: "Tag name"
+        value: ${{ jobs.get_next_release.outputs.release_name }}
+      changelog:
+        description: "Changelog"
+        value: ${{ jobs.get_next_release.outputs.clean_changelog }}
+
+jobs:
+  get_next_release:
+    name: Get Next Release
+    runs-on: ubuntu-latest
+    outputs:
+      release_name: ${{ steps.get_next_version.outputs.tag }}
+    #   changelog: ${{ steps.get_next_version.outputs.changelog }}
+      clean_changelog: ${{ steps.get_next_version.outputs.clean_changelog }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.3.0
+        with:
+          fetch-depth: 0
+
+      - name: Changes since last tag
+        id: changes
+        run: |
+          rm -f .changes
+          git log $(git describe --tags --abbrev=0)..HEAD --no-merges --oneline >> .changes
+          cat .changes
+
+      - name: Check for changes
+        run: |
+          if [[ -z $(grep '[^[:space:]]' .changes) ]] ; then
+            echo "changes=false"
+            echo "changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changes=true"
+            echo "changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Cancel if no changes
+        if: steps.changes.outputs.changes == 'false'
+        run: exit 1
+
+      - name: Set server URL
+        id: set_srvurl
+        run: |
+          SRVURL=$(echo "${{ github.server_url }}" | sed 's/https:\/\/\(.*\)/\1/')
+          echo "srvurl=$SRVURL" >> "$GITHUB_OUTPUT"
+
+      - name: Get next version
+        uses: TriPSs/conventional-changelog-action@v6
+        id: get_next_version
+        with:
+          git-url: ${{ steps.set_srvurl.outputs.srvurl }}
+          github-token: ${{ github.token }}
+          preset: "conventionalcommits"
+          # preset: "angular"  # This is the default
+          skip-commit: true
+          release-count: 1
+          output-file: false
+          create-summary: true
+          skip-on-empty: true
+          skip-version-file: true
+          skip-tag: false
+      
+      - name: Cancel if no changelog
+        if: steps.get_next_version.outputs.skipped == 'true'
+        run: exit 1

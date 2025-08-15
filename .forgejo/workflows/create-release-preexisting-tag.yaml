@@ -1,0 +1,24 @@
+name: Create Release Pre-Existing Tag
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+      body:
+        required: false
+    secrets:
+      ACTIONS_TOKEN:
+        required: true
+
+jobs:
+  create_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release
+        uses: https://forgejo.tainton.uk/actions/create-release-action@v1.1.0
+        with:
+          release_name: ${{ inputs.tag }}
+          tag: ${{ inputs.tag }}
+          body: ${{ inputs.body }}
+          token: ${{ secrets.ACTIONS_TOKEN }}

@@ -1,0 +1,17 @@
+name: "Enforce Conventional Commit"
+
+on:
+  workflow_call:
+    inputs:
+      commit_message:
+        required: true
+        type: string
+
+jobs:
+  validate:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: http://${{ vars.PACKAGES_REGISTRY_URL }}/actions/conventional-commits-check-action@v1.2.3
+        with:
+          commit-message: ${{ inputs.commit_message }}

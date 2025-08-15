@@ -1,0 +1,96 @@
+name: Docker Compose Deploy Stack
+
+on:
+  workflow_call:
+    secrets:
+      DEPLOY_HOST:
+        required: true
+        type: string
+      DEPLOY_USERNAME:
+        required: true
+        type: string
+      DEPLOY_SSHKEY:
+        required: true
+        type: string
+      DEPLOY_PORT:
+        required: true
+        type: string
+      PUSHOVER_USER_TOKEN:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:      
+      - name: "[ON RUNNER] Notify Build Start"
+        uses: https://git.tainton.uk/actions/pushover-action@v1.1.3
+        env:
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_TOKEN: ${{ secrets.PUSHOVER_USER_TOKEN }}
+        with:
+          message: "Deploying stack ${{ github.repository }}"
+          title: 'Stack Deployment Started'
+          url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          url_title: 'View Logs'
+
+      - name: "[ON RUNNER] Checkout the repo"
+        uses: actions/checkout@v4
+      
+      - name: "[ON RUNNER] Set project variables"
+        run: |
+          projectname="${{ github.event.repository.name }}"
+          echo "project_name=$projectname" >> $GITHUB_ENV
+          echo "project_folder=/home/${{ secrets.DEPLOY_USERNAME }}/$projectname" >> $GITHUB_ENV
+
+      - name: "[ON RUNNER] Create env file"
+        run: |
+          rm -f ".env"
+          touch ".env"
+          echo "$ALLVARS" | jq -r '. | to_entries[] | select(.key | startswith("DC_")) | .key + "=" + .value' >> ".env"
+          echo "$ALLSECRETS" | jq -r '. | to_entries[] | select(.key | startswith("DC_")) | .key + "=" + .value' >> ".env"
+        env:
+          ALLVARS: ${{ toJSON(vars) }}
+          ALLSECRETS: ${{ toJSON(secrets) }}
+      
+      - name: "[ON HOST] Make directory if not exists"
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          key: ${{ secrets.DEPLOY_SSHKEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          script: |
+            mkdir -p ${{ env.project_folder }}
+      
+      - name: "[ON HOST] SCP files to host"
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          key: ${{ secrets.DEPLOY_SSHKEY }}
+          source: "./compose.yaml,./.env"
+          target: "${{ env.project_folder }}/"
+      
+      - name: "[ON HOST] Deploy Stack"
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          key: ${{ secrets.DEPLOY_SSHKEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          script: |
+            cd ${{ env.project_folder }}
+            docker compose --env-file .env up --detach
+      
+      - name: "[ON RUNNER] Notify Build End"
+        uses: https://git.tainton.uk/actions/pushover-action@v1.1.3
+        env:
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_TOKEN: ${{ secrets.PUSHOVER_USER_TOKEN }}
+        with:
+          message: "Deployed stack ${{ github.repository }}"
+          title: 'Stack Deployment ${{ job.status }}'
+          url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          url_title: 'View Logs'

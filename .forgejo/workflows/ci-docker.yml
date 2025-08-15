@@ -1,0 +1,37 @@
+name: Docker CI
+on:
+  workflow_call:
+    secrets:
+      SONAR_TOKEN:
+        required: true
+      SNYK_TOKEN:
+        required: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4.3.0
+        with:
+          fetch-depth: 0
+
+      - uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          output-file: hadolint.out
+          format: sonarqube
+          no-fail: true
+
+      - name: SonarQube Cloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5.3.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Snyk Vulnerability Scan
+        uses: snyk/actions/python@master
+        continue-on-error: true # Sometimes vulns aren't immediately fixable
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: test --all-projects
