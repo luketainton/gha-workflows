@@ -11,6 +11,9 @@
   "assigneesFromCodeOwners": false,
   "rebaseWhen": "behind-base-branch",
   "rollbackPrs": true,
+  "semanticCommits": "enabled",
+  "semanticCommitScope": "deps",
+  "semanticCommitType": "feat",
   "labels": [
     "type/dependencies"
   ],
